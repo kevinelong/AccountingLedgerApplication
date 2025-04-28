@@ -215,29 +215,38 @@ public class Main {
         int DESCRIPTION = 2;
         int VENDOR = 3;
         int AMOUNT = 4;
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
             String _ = reader.readLine(); //skip first
             String line;
+            int i = 1;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("\\|");
-                Date d = fmt.parse(parts[DATE] + " " + parts[TIME]);
-                LocalDate ld = Instant.ofEpochMilli(d.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+                Date d;
+                LocalDate ld;
+                try {
+                    d = fmt.parse(parts[DATE] + " " + parts[TIME]);
+                    ld = Instant.ofEpochMilli(d.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+                }catch (ParseException e){
+                    System.out.printf("Error parsing date on line %d", i);
+                    ld = LocalDate.now();
+                }
                 transactionList.add(new Transaction(
                         ld,
                         parts[DESCRIPTION],
                         parts[VENDOR],
                         Double.parseDouble(parts[AMOUNT])
                 ));
+                i++;
             }
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
         }
     }
 
     public static void saveTransactions() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+        try {
+            BufferedWriter writer  = new BufferedWriter(new FileWriter(filePath));
             writer.write("date|time|description|vendor|amount\n");
             for (Transaction t : transactionList) {
                 writer.write(t.toString() + "\n");
