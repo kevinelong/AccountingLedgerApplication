@@ -1,25 +1,22 @@
-import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Scanner;
 
 import static java.time.temporal.TemporalAdjusters.*;
 
-public class App{
-    protected String filePath = "transactions.csv";
-    protected ArrayList<Transaction> transactionList = new ArrayList<>();
+public class App {
     protected Scanner scanner = new Scanner(System.in);
     protected SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    protected Ledger ledger = new Ledger();
 
-    public void run(){
-        this.loadTransactions();
+    App() {
+        this.ledger.load();
         this.showHomeScreen();
-        this.saveTransactions();
+        this.ledger.save();
     }
 
     protected void addTransaction(boolean isDeposit) {
@@ -45,11 +42,10 @@ public class App{
             if (isDeposit) {
                 amount = -amount; //negative
             }
-
-            transactionList.add(new Transaction(ld, description, vendor, amount));
+            ledger.add(new Transaction(ld, description, vendor, amount));
 
             System.out.print("\nAdd Another?");
-        }while(scanner.nextLine().trim().toLowerCase().matches("true|yes|t|y"));
+        } while (scanner.nextLine().trim().toLowerCase().matches("true|yes|t|y"));
     }
 
     protected void showHomeScreen() {
@@ -70,12 +66,13 @@ public class App{
                 case "X" -> System.out.println("Leaving Home Screen.");
                 default -> System.out.println("Try again.");
             }
-        }while(!"X".equals(c));
+        } while (!"X".equals(c));
     }
 
     protected void showTransactions(String kind) {
         System.out.println(kind + ":");
-        for (Transaction t : transactionList) {
+
+        for (Transaction t : ledger.getAll()) {
             if (kind.equalsIgnoreCase("ALL")
                     ||
                     (kind.equalsIgnoreCase("DEPOSITS") && t.amount > 0)
@@ -130,7 +127,7 @@ public class App{
             default -> today;
         };
 
-        for (Transaction t : transactionList) {
+        for (Transaction t : ledger.getAll()) {
             if (isDateInRange(t.datetime, firstDay, lastDay.plusDays(1))) {
                 System.out.println(t);
             }
@@ -140,10 +137,8 @@ public class App{
     public void searchByVendor() {
         System.out.println("\nENTER VENDOR:");
         String vendor = scanner.nextLine().trim().toUpperCase();
-        for (Transaction t : transactionList) {
-            if (t.vendor.equalsIgnoreCase(vendor)) {
-                System.out.println(t);
-            }
+        for (Transaction t : ledger.getByVendor(vendor)) {
+            System.out.println(t);
         }
     }
 
@@ -168,47 +163,6 @@ public class App{
                 case "0" -> looping = false;
                 default -> System.out.println("Try again.");
             }
-        }
-    }
-
-    public void loadTransactions() {
-        int DATE = 0, TIME = 1, DESCRIPTION = 2, VENDOR = 3, AMOUNT = 4;
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(filePath));
-            String _ = reader.readLine(); //skip first
-            String line;
-            int i = 1;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split("\\|");
-                Date d;
-                LocalDate ld;
-                try {
-                    d = fmt.parse(parts[DATE] + " " + parts[TIME]);
-                    ld = Instant.ofEpochMilli(d.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-                }catch (ParseException e){
-                    System.out.printf("Error parsing date on line %d", i);
-                    ld = LocalDate.now();
-                }
-                transactionList.add(
-                        new Transaction(ld, parts[DESCRIPTION], parts[VENDOR], Double.parseDouble(parts[AMOUNT]))
-                );
-                i++;
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
-        }
-    }
-
-    public void saveTransactions() {
-        try {
-            BufferedWriter writer  = new BufferedWriter(new FileWriter(filePath));
-            writer.write("date|time|description|vendor|amount\n");
-            for (Transaction t : transactionList) {
-                writer.write(t.toString() + "\n");
-                writer.flush();
-            }
-        } catch (IOException e) {
-            System.err.println("Error writing file: " + e.getMessage());
         }
     }
 }
