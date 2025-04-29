@@ -3,10 +3,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.Scanner;
-
-import static java.time.temporal.TemporalAdjusters.*;
+import java.util.*;
 
 public class App {
     protected Scanner scanner = new Scanner(System.in);
@@ -49,89 +46,24 @@ public class App {
     }
 
     protected void showHomeScreen() {
-        String c;
-        do {
-            System.out.print("""
-                        HOME SCREEN:
-                            D) Add Deposit - prompt user for the deposit information and save it to the csv file
-                            P) Make Payment (Debit) - prompt user for the debit information and save it to the csv file
-                            L) Ledger - display the ledger screen
-                            X) Exit - exit the application
-                    """);
-            c = scanner.nextLine().trim().toUpperCase();
-            switch (c) {
-                case "D" -> addTransaction(true);
-                case "P" -> addTransaction(false);
-                case "L" -> showLedgerScreen();
-                case "X" -> System.out.println("Leaving Home Screen.");
-                default -> System.out.println("Try again.");
-            }
-        } while (!"X".equals(c));
-    }
-
-    protected void showTransactions(String kind) {
-        System.out.println(kind + ":");
-
-        for (Transaction t : ledger.getAll()) {
-            if (kind.equalsIgnoreCase("ALL")
-                    ||
-                    (kind.equalsIgnoreCase("DEPOSITS") && t.amount > 0)
-                    ||
-                    (kind.equalsIgnoreCase("PAYMENTS") && t.amount < 0)
-            ) {
-                System.out.println(t);
-            }
-        }
+        ArrayList<Action> actions =  new ArrayList<>(List.of(
+                new Action("D", "Add Deposit", () -> addTransaction(true)),
+                new Action("P", "Make Payment (Debit)", () -> addTransaction(false)),
+                new Action("L", "Ledger", this::showLedgerScreen)
+        ));
+        Menu m = new Menu("Home Screen", actions, "X");
+        m.go();
     }
 
     protected void showLedgerScreen() {
-        boolean looping = true;
-        while (looping) {
-            System.out.print("""
-                            LEDGER SCREEN:
-                                A) All
-                                D) Deposits
-                                P) Payments
-                                R) Reports
-                                H) Home
-                    """);
-            switch (scanner.nextLine().trim().toUpperCase()) {
-                case "A" -> showTransactions("ALL");
-                case "D" -> showTransactions("DEPOSITS");
-                case "P" -> showTransactions("PAYMENTS");
-                case "R" -> showReportsScreen();
-                case "X" -> looping = false;
-                default -> System.out.println("Try again.");
-            }
-        }
-    }
-
-    protected static boolean isDateInRange(LocalDate dateToCheck, LocalDate startDate, LocalDate endDate) {
-        return !(dateToCheck.isBefore(startDate) || dateToCheck.isAfter(endDate));
-    }
-
-    protected void showPeriod(String timeframe) {
-        LocalDate today = LocalDate.now();
-
-        LocalDate firstDay = switch (timeframe) {
-            case "Month To Date" -> today.with(firstDayOfMonth());
-            case "Previous Month" -> today.minusMonths(1).with(firstDayOfMonth());
-            case "Year To Date" -> today.with(firstDayOfYear());
-            case "Previous Year" -> today.minusYears(1).with(firstDayOfYear());
-            default -> today;
-        };
-
-        LocalDate lastDay = switch (timeframe) {
-            case "Previous Month" -> today.minusMonths(1).with(lastDayOfMonth());
-            case "Previous Year" -> today.minusYears(1).with(lastDayOfYear());
-            default -> today;
-        };
-
-        for (Transaction t : ledger.getAll()) {
-            if (isDateInRange(t.datetime, firstDay, lastDay.plusDays(1))) {
-                System.out.println(t);
-            }
-        }
+        ArrayList<Action> actions =  new ArrayList<>(List.of(
+                new Action("A", "All", () -> ledger.showTransactions("ALL")),
+                new Action("D", "Deposits", () -> ledger.showTransactions("DEPOSITS")),
+                new Action("P", "Payments", () -> ledger.showTransactions("PAYMENTS")),
+                new Action("R", "Reports", this::showReportsScreen)
+        ));
+        Menu m = new Menu("Home Screen", actions, "H");
+        m.go();
     }
 
     public void searchByVendor() {
@@ -143,26 +75,14 @@ public class App {
     }
 
     public void showReportsScreen() {
-        boolean looping = true;
-        while (looping) {
-            System.out.print("""
-                    REPORTS SCREEN:
-                        1) Month To Date
-                        2) Previous Month
-                        3) Year To Date
-                        4) Previous Year
-                        5) Search by Vendor
-                        0) Back
-                    """);
-            switch (scanner.nextLine().trim().toUpperCase()) {
-                case "1" -> showPeriod("Month To Date");
-                case "2" -> showPeriod("Previous Month");
-                case "3" -> showPeriod("Year To Date");
-                case "4" -> showPeriod("Previous Year");
-                case "5" -> searchByVendor();
-                case "0" -> looping = false;
-                default -> System.out.println("Try again.");
-            }
-        }
+        ArrayList<Action> actions =  new ArrayList<>(List.of(
+                new Action("1", "Month To Date", () -> ledger.showPeriod("Month To Date")),
+                new Action("2", "Previous Month", () -> ledger.showPeriod("Previous Month")),
+                new Action("3", "Year To Date", () -> ledger.showPeriod("Year To Date")),
+                new Action("4", "Previous Year", () -> ledger.showPeriod("Previous Year")),
+                new Action("5", "Search by Vendor", this::searchByVendor)
+        ));
+        Menu m = new Menu("REPORTS SCREEN", actions, "0");
+        m.go();
     }
 }

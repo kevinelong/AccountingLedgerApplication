@@ -7,6 +7,8 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 
+import static java.time.temporal.TemporalAdjusters.*;
+
 
 public class Ledger {
     protected String filePath = "transactions.csv";
@@ -33,15 +35,15 @@ public class Ledger {
         return !(dateToCheck.isBefore(startDate) || dateToCheck.isAfter(endDate));
     }
 
-    public ArrayList<Transaction> getPeriod(LocalDate firstDay, LocalDate lastDay) {
-        ArrayList<Transaction> list = new ArrayList<>();
-        for (Transaction t : transactionList) {
-            if (isDateInRange(t.datetime, firstDay, lastDay.plusDays(1))) {
-                list.add(t);
-            }
-        }
-        return list;
-    }
+//    public ArrayList<Transaction> getPeriod(LocalDate firstDay, LocalDate lastDay) {
+//        ArrayList<Transaction> list = new ArrayList<>();
+//        for (Transaction t : transactionList) {
+//            if (isDateInRange(t.datetime, firstDay, lastDay.plusDays(1))) {
+//                list.add(t);
+//            }
+//        }
+//        return list;
+//    }
 
     public ArrayList<Transaction> getByVendor(String vendor) {
         ArrayList<Transaction> list = new ArrayList<>();
@@ -94,4 +96,42 @@ public class Ledger {
         }
     }
 
+    protected void showPeriod(String timeframe) {
+        LocalDate today = LocalDate.now();
+
+        LocalDate firstDay = switch (timeframe) {
+            case "Month To Date" -> today.with(firstDayOfMonth());
+            case "Previous Month" -> today.minusMonths(1).with(firstDayOfMonth());
+            case "Year To Date" -> today.with(firstDayOfYear());
+            case "Previous Year" -> today.minusYears(1).with(firstDayOfYear());
+            default -> today;
+        };
+
+        LocalDate lastDay = switch (timeframe) {
+            case "Previous Month" -> today.minusMonths(1).with(lastDayOfMonth());
+            case "Previous Year" -> today.minusYears(1).with(lastDayOfYear());
+            default -> today;
+        };
+
+        for (Transaction t : getAll()) {
+            if (isDateInRange(t.datetime, firstDay, lastDay.plusDays(1))) {
+                System.out.println(t);
+            }
+        }
+    }
+
+    protected void showTransactions(String kind) {
+        System.out.println(kind + ":");
+
+        for (Transaction t : getAll()) {
+            if (kind.equalsIgnoreCase("ALL")
+                    ||
+                    (kind.equalsIgnoreCase("DEPOSITS") && t.amount > 0)
+                    ||
+                    (kind.equalsIgnoreCase("PAYMENTS") && t.amount < 0)
+            ) {
+                System.out.println(t);
+            }
+        }
+    }
 }
