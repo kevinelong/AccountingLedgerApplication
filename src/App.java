@@ -18,14 +18,17 @@ public class App {
 
     protected void addTransaction(boolean isDeposit) {
         do {
-            System.out.println("\nEnter Date and Time (yyyy-MM-dd HH:mm:ss): ");
-            Date date;
-            try {
-                date = fmt.parse(scanner.nextLine().trim());
-            } catch (ParseException e) {
-                throw new RuntimeException(e);
+            LocalDate ld = null;
+            while(ld == null) {
+                System.out.println("\nEnter Date and Time (yyyy-MM-dd HH:mm:ss): ");
+                Date date;
+                try {
+                    date = fmt.parse(scanner.nextLine().trim());
+                    ld = Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+                } catch (ParseException e) {
+                    System.out.println("TRY AGAIN:");
+                }
             }
-            LocalDate ld = Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
 
             System.out.print("\nEnter Description: ");
             String description = scanner.nextLine().trim();
