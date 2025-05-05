@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 
 import static java.time.temporal.TemporalAdjusters.*;
@@ -21,14 +22,16 @@ public class Ledger {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (Transaction t : transactionList) {
+        for (Transaction t : getAll()) {
             sb.append(t);
         }
         return sb.toString();
     }
 
     public ArrayList<Transaction> getAll() {
-        return new ArrayList<>(this.transactionList);
+        ArrayList<Transaction> list = new ArrayList<>(this.transactionList);
+        list.sort(Comparator.comparing(Transaction::getDatetime));
+        return new ArrayList<Transaction>(list.reversed());
     }
 
     protected static boolean isDateInRange(LocalDate dateToCheck, LocalDate startDate, LocalDate endDate) {
@@ -47,7 +50,7 @@ public class Ledger {
 
     public ArrayList<Transaction> getByVendor(String vendor) {
         ArrayList<Transaction> list = new ArrayList<>();
-        for (Transaction t : transactionList) {
+        for (Transaction t : getAll()) {
             if (t.vendor.equalsIgnoreCase(vendor)) {
                 list.add(t);
             }
@@ -69,7 +72,7 @@ public class Ledger {
                 try {
                     d = fmt.parse(parts[DATE] + " " + parts[TIME]);
                     ld = Instant.ofEpochMilli(d.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-                }catch (ParseException e){
+                } catch (ParseException e) {
                     System.err.printf("Error parsing date on line %d", i);
                     ld = LocalDate.now();
                 }
@@ -85,7 +88,7 @@ public class Ledger {
 
     protected void save() {
         try {
-            BufferedWriter writer  = new BufferedWriter(new FileWriter(filePath));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
             writer.write("date|time|description|vendor|amount\n");
             for (Transaction t : transactionList) {
                 writer.write(t.toString() + "\n");

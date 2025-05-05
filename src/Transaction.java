@@ -22,4 +22,8 @@ public class Transaction {
         String dts = fmt.format(date);
         return String.format("%s|%s|%s|%.2f", dts, description, vendor, amount);
     }
+
+    public LocalDate getDatetime() {
+        return datetime;
+    }
 }
