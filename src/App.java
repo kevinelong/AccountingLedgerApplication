@@ -26,13 +26,29 @@ public class App {
                     date = fmt.parse(scanner.nextLine().trim());
                     ld = Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
                 } catch (ParseException e) {
+                    System.out.println("ERROR: " + e.getMessage());
                     System.out.println("TRY AGAIN:");
+                    continue;
+                }
+                if(ld.getYear() < 2025){
+                    System.out.println("No entries from before 2025");
+                    ld = null;
                 }
             }
 
-            System.out.print("\nEnter Description: ");
-            String description = scanner.nextLine().trim();
-
+            String description = null;
+            while(description == null) {
+                System.out.print("\nEnter Description: ");
+                description = scanner.nextLine().trim();
+                try {
+                    if (description.isEmpty() || description.isBlank()) {
+                        description = null;
+                    }
+                }catch (Exception e){
+                    System.out.println("ERROR: " + e.getMessage());
+                    description = null;
+                }
+            }
             System.out.print("\nEnter Vendor Name: ");
             String vendor = scanner.nextLine().trim();
 
